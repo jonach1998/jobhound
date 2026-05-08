@@ -1,0 +1,9 @@
+services:
+  jobhound:
+    build: .
+    container_name: jobhound
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./profiles:/app/profiles:ro

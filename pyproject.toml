@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src/jobhound"]
+target-version = "py312"
+
+[tool.ruff.format]
+quote-style = "double"

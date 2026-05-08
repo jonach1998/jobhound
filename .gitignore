@@ -1,0 +1,16 @@
+.env
+data/
+
+# Personal data — real profiles stay local; use profiles/example/ as your template
+profiles/*
+!profiles/example
+
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+.DS_Store
+.venv/

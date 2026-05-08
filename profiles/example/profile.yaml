@@ -1,0 +1,19 @@
+# Copy this folder, rename it, and customize the three files.
+# Remove the "example: true" line below to activate the profile.
+example: true
+
+display_name: "Customer Service - San José, CR"
+score_threshold: 70
+search_terms:
+  - "customer service representative"
+  - "customer support agent"
+  - "chat support agent"
+  - "back office agent"
+  - "call center agent"
+  - "remote customer service"
+  - "agente de servicio al cliente"
+  - "agente de call center"
+  - "soporte al cliente remoto"
+  - "back office remoto"
+  - "call center sin experiencia"
+  - "atencion al cliente"
