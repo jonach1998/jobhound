@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Iterator, Sequence
 
 import requests
@@ -19,10 +20,16 @@ _FAIR_ID = 100
 _RESULTS_PER_PAGE = 20
 _MAX_PAGES = 20  # safety cap; current total across all terms is ~200 jobs (11 pages)
 _REQUEST_TIMEOUT = 15
+_REQUEST_DELAY = 0.5  # seconds between page requests
 _DESCRIPTION_LIMIT = 3000
 
 # CINDE is Costa Rica's investment promotion agency — all listings are in Costa Rica.
 _SUPPORTED_COUNTRIES = frozenset({"costa rica"})
+
+# Known server bug: the CINDEJobs API crashes with HTTP 500 instead of returning
+# an empty list when a search term matches zero jobs. This is not an application
+# error — treat it as "no results" and continue silently.
+_SERVER_BUG_STATUS = 500
 
 _QUERY = """
 query($search: String, $page: Int, $limit: Int, $fairId: Int) {
@@ -48,15 +55,21 @@ class CindeJobsScraper(BaseScraper):
 
     Uses the public GraphQL API (no auth required). All jobs are in Costa Rica,
     so this scraper is only active for profiles with country = 'costa rica'.
+
+    Note: CINDE's job listings are in English. Search terms that have no matches
+    trigger a known server-side bug (HTTP 500 instead of an empty list). Use
+    English terms or accented Spanish (e.g. 'logística') for best results.
     """
 
     def __init__(
         self,
         search_terms: Sequence[str],
         session: requests.Session | None = None,
+        request_delay: float = _REQUEST_DELAY,
     ) -> None:
         super().__init__(search_terms)
         self.session = session or requests.Session()
+        self.request_delay = request_delay
 
     @classmethod
     def from_profile(cls, profile: ProfileConfig) -> CindeJobsScraper | None:
@@ -79,6 +92,9 @@ class CindeJobsScraper(BaseScraper):
         page = 1
 
         while page <= _MAX_PAGES:
+            if page > 1:
+                time.sleep(self.request_delay)
+
             raw_jobs = self._fetch_page(term, page)
             if not raw_jobs:
                 break
@@ -106,6 +122,10 @@ class CindeJobsScraper(BaseScraper):
             response = self.session.post(
                 _GRAPHQL_URL, json=payload, headers=_HEADERS, timeout=_REQUEST_TIMEOUT
             )
+            if response.status_code == _SERVER_BUG_STATUS:
+                # The API crashes with 500 on zero-result searches instead of
+                # returning an empty list. This is expected for terms with no matches.
+                return []
             response.raise_for_status()
             return response.json().get("data", {}).get("viewJobOffers") or []
         except (requests.RequestException, ValueError, AttributeError) as exc:

@@ -32,9 +32,14 @@ def make_profile(country: str = "costa rica", disable_scrapers: tuple[str, ...] 
     return profile
 
 
-def make_mock_session(json_data: object = None, raise_for_status_exc: Exception | None = None) -> MagicMock:
+def make_mock_session(
+    json_data: object = None,
+    raise_for_status_exc: Exception | None = None,
+    status_code: int = 200,
+) -> MagicMock:
     session = MagicMock()
     response = MagicMock()
+    response.status_code = status_code
     if raise_for_status_exc:
         response.raise_for_status.side_effect = raise_for_status_exc
     else:
@@ -128,8 +133,21 @@ class CindeJobsScraperTest(unittest.TestCase):
         variables = kwargs["json"]["variables"]
         self.assertEqual(variables["fairId"], _FAIR_ID)
 
-    def test_fetch_page_returns_empty_on_http_error(self) -> None:
-        session = make_mock_session(raise_for_status_exc=requests.HTTPError("500 Server Error"))
+    def test_fetch_page_returns_empty_silently_on_500(self) -> None:
+        """HTTP 500 is a known API bug (zero-result search crash) — return empty, no warning."""
+        session = make_mock_session(status_code=500)
+        scraper = CindeJobsScraper([], session=session)
+        result = scraper._fetch_page("compras", 1)
+
+        self.assertEqual(result, [])
+        session.post.return_value.raise_for_status.assert_not_called()
+
+    def test_fetch_page_returns_empty_on_other_http_error(self) -> None:
+        """Non-500 HTTP errors (e.g. 503) are genuine failures and should log a warning."""
+        session = make_mock_session(
+            status_code=503,
+            raise_for_status_exc=requests.HTTPError("503 Service Unavailable"),
+        )
         scraper = CindeJobsScraper([], session=session)
         result = scraper._fetch_page("logistics", 1)
 
@@ -182,7 +200,7 @@ class CindeJobsScraperTest(unittest.TestCase):
             calls.append(page)
             return full_page if page == 1 else []
 
-        scraper = CindeJobsScraper(["supply chain"])
+        scraper = CindeJobsScraper(["supply chain"], request_delay=0)
         scraper._fetch_page = fake_fetch
         results = scraper._search("supply chain")
 
@@ -198,7 +216,7 @@ class CindeJobsScraperTest(unittest.TestCase):
             calls.append(page)
             return [RAW_JOB]  # 1 result < 20 limit → no more pages
 
-        scraper = CindeJobsScraper(["supply chain"])
+        scraper = CindeJobsScraper(["supply chain"], request_delay=0)
         scraper._fetch_page = fake_fetch
         results = scraper._search("supply chain")
 
@@ -212,7 +230,7 @@ class CindeJobsScraperTest(unittest.TestCase):
             calls.append(page)
             return []
 
-        scraper = CindeJobsScraper(["supply chain"])
+        scraper = CindeJobsScraper(["supply chain"], request_delay=0)
         scraper._fetch_page = fake_fetch
         results = scraper._search("supply chain")
 
@@ -230,7 +248,7 @@ class CindeJobsScraperTest(unittest.TestCase):
             calls.append(page)
             return full_page  # always returns a full page to force pagination
 
-        scraper = CindeJobsScraper(["supply chain"])
+        scraper = CindeJobsScraper(["supply chain"], request_delay=0)
         scraper._fetch_page = fake_fetch
         scraper._search("supply chain")
 
@@ -240,7 +258,7 @@ class CindeJobsScraperTest(unittest.TestCase):
         def fake_fetch(term: str, page: int) -> list:
             return [RAW_JOB] if page == 1 else []
 
-        scraper = CindeJobsScraper(["supply chain", "logistics"])
+        scraper = CindeJobsScraper(["supply chain", "logistics"], request_delay=0)
         scraper._fetch_page = fake_fetch
         jobs = list(scraper.scrape())
 
