@@ -13,7 +13,7 @@ from jobhound.utils.logging_utils import log_event
 
 log = logging.getLogger(__name__)
 
-GRAPHQL_URL = "https://api.cindejobs.com/graphql"
+_GRAPHQL_URL = "https://api.cindejobs.com/graphql"
 # fairId 100 is the permanent job fair — required; without it the API returns 0 results.
 _FAIR_ID = 100
 _RESULTS_PER_PAGE = 20
@@ -104,7 +104,7 @@ class CindeJobsScraper(BaseScraper):
         }
         try:
             response = self.session.post(
-                GRAPHQL_URL, json=payload, headers=_HEADERS, timeout=_REQUEST_TIMEOUT
+                _GRAPHQL_URL, json=payload, headers=_HEADERS, timeout=_REQUEST_TIMEOUT
             )
             response.raise_for_status()
             return response.json().get("data", {}).get("viewJobOffers") or []
