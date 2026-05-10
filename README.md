@@ -208,7 +208,7 @@ Each profile is a folder under `profiles/` with three files:
 
 ```
 profiles/my-profile/
-  profile.yaml         # display name, score threshold, search terms
+  profile.yaml         # country, score threshold, search terms, and optional overrides
   cv.txt               # candidate CV sent to the AI for scoring
   scoring_prompt.txt   # scoring rules and criteria for this profile
 ```
@@ -217,21 +217,28 @@ profiles/my-profile/
 
 1. Copy `profiles/example/` and rename the folder.
 2. Edit the three files:
-   - **`profile.yaml`** — set `display_name`, `score_threshold` (0–100), `country`, optionally `location`, and `search_terms`.
+   - **`profile.yaml`** — set `display_name`, `score_threshold` (0–100), `country`, optionally `location`, `disable_scrapers`, and `search_terms`.
    - **`cv.txt`** — the candidate's CV in plain text. This is sent verbatim to the AI for every job scored.
    - **`scoring_prompt.txt`** — tell the AI what makes a good or bad match for this candidate. Describe the candidate's situation, define the score scale, and list what to prioritize and penalize. English or Spanish both work. See `profiles/example/scoring_prompt.txt` for a complete reference.
 3. Remove `example: true` from `profile.yaml`.
 
 The app auto-discovers all active profiles at startup. No code or Docker changes needed. Multiple profiles run independently — useful for searching different roles, countries, or candidates simultaneously.
 
-**Per-profile location fields:**
+**Per-profile `profile.yaml` fields:**
 
 | Field | Required | Description |
 |---|---|---|
 | `country` | Yes | Lowercase country slug (e.g. `"costa rica"`, `"usa"`, `"mexico"`, `"germany"`). Used for Indeed; LinkedIn falls back to this if `location` is unset; Computrabajo is auto-enabled for supported Latin American countries. See the [full list of 69 supported countries](https://github.com/Bunsly/JobSpy/blob/main/jobspy/model.py). |
 | `location` | No | More specific city- or region-level filter for LinkedIn and Indeed (e.g. `"San José, CR"`, `"Mexico City"`, `"Berlin, Germany"`). Defaults to the country name capitalized when omitted. |
+| `disable_scrapers` | No | List of scrapers to skip for this profile. Valid values: `computrabajo`, `jobspy`, `linkedin`, `indeed`. Using `linkedin` or `indeed` disables only that site within JobSpy; `jobspy` disables both. |
 
 > **Computrabajo is auto-enabled** when `country` is one of: argentina, bolivia, chile, colombia, costa rica, dominican republic, ecuador, el salvador, guatemala, honduras, mexico, nicaragua, panama, paraguay, peru, puerto rico, uruguay, venezuela. For any other country, only LinkedIn and Indeed run.
+
+Example — disable Computrabajo for a specific profile:
+```yaml
+disable_scrapers:
+  - computrabajo
+```
 
 ## Project structure
 

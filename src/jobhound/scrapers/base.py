@@ -17,7 +17,13 @@ class BaseScraper(ABC):
     @classmethod
     @abstractmethod
     def from_profile(cls, profile: ProfileConfig) -> BaseScraper | None:
-        """Build an instance from a profile, or return None to skip for this profile."""
+        """Build an instance from a profile, or return None to skip for this profile.
+
+        Scrapers that support multiple sub-sites (e.g. linkedin + indeed within one class)
+        should filter profile.disable_scrapers internally and return None when all sub-sites
+        are disabled. Single-site scrapers do not need to check disable_scrapers — the app
+        filters them automatically using the lowercase class name without the 'Scraper' suffix.
+        """
 
     @abstractmethod
     def scrape(self) -> Iterator[Job]:

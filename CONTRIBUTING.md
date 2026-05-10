@@ -73,7 +73,7 @@ src/jobhound/
   scrapers/
     base.py            # BaseScraper ABC
     jobspy_scraper.py  # LinkedIn + Indeed via python-jobspy
-    computrabajo_scraper.py  # Computrabajo (Costa Rica) via HTML scraping
+    computrabajo_scraper.py  # Computrabajo (Latin America) via HTML scraping
     __init__.py        # SCRAPERS registry — add new scrapers here
   services/
     job_scorer.py      # AI scoring via OpenAI-compatible API
@@ -125,17 +125,19 @@ class MySiteScraper(BaseScraper):
 ```
 
 - `make_job_id` produces a stable 16-character hex ID from site + URL + title + company — use it so the same job is not scored twice across runs.
-- `from_profile` builds the scraper instance for a given profile. Return `None` to skip the scraper (for example, if the profile doesn't configure a country your site supports).
+- `from_profile` builds the scraper instance for a given profile. Return `None` to skip the scraper (for example, if the profile doesn't configure a country your site supports). The app automatically handles `disable_scrapers` for single-site scrapers using the class name — no extra code needed. If your scraper covers multiple sites (like JobSpy covers LinkedIn and Indeed), filter `profile.disable_scrapers` inside `from_profile` to support per-site disabling.
 
 ## Adding a profile
 
 Copy `profiles/example/`, rename the folder, and edit the three files:
 
-- **`profile.yaml`** — set `display_name`, `score_threshold` (0–100), `country`, optionally `location`, and `search_terms`.
+- **`profile.yaml`** — set `display_name`, `score_threshold` (0–100), `country`, optionally `location`, `disable_scrapers`, and `search_terms`.
 - **`cv.txt`** — the candidate's CV in plain text. Sent verbatim to the AI for every job scored.
 - **`scoring_prompt.txt`** — scoring instructions for the AI. See `profiles/example/scoring_prompt.txt` for a complete example.
 
 Remove `example: true` from `profile.yaml` when ready. The app auto-discovers all active profiles at startup.
+
+**`disable_scrapers`** accepts: `computrabajo`, `jobspy`, `linkedin`, `indeed`. Using `linkedin` or `indeed` disables only that site within JobSpy; `jobspy` disables both at once.
 
 ## Code style
 

@@ -24,6 +24,12 @@ country: "costa rica"
 # "Mexico City", "Berlin, Germany"). Defaults to the country name when omitted.
 # location: "San José, Costa Rica"
 
+# Optional. Scrapers to skip for this profile.
+# Available names: computrabajo, jobspy, linkedin, indeed
+# (linkedin and indeed disable only that site within JobSpy; jobspy disables both)
+# disable_scrapers:
+#   - computrabajo
+
 search_terms:
   - "customer service representative"
   - "customer support agent"

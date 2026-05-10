@@ -30,8 +30,11 @@ class JobSpyScraper(BaseScraper):
         self.job_sites = job_sites
 
     @classmethod
-    def from_profile(cls, profile: ProfileConfig) -> JobSpyScraper:
-        return cls(profile.search_terms, profile.country, profile.location)
+    def from_profile(cls, profile: ProfileConfig) -> JobSpyScraper | None:
+        sites = [s for s in JOB_SITES if s not in profile.disable_scrapers]
+        if not sites:
+            return None
+        return cls(profile.search_terms, profile.country, profile.location, job_sites=sites)
 
     def scrape(self) -> Iterator[Job]:
         from jobspy import scrape_jobs

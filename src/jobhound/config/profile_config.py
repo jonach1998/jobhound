@@ -21,6 +21,7 @@ class ProfileConfig:
     cv_text: str
     scoring_prompt: str
     search_terms: tuple[str, ...]
+    disable_scrapers: tuple[str, ...]
 
     @classmethod
     def from_id(
@@ -44,6 +45,11 @@ class ProfileConfig:
 
         country = _required_text(data, "country").lower()
         location = _optional_text(data, "location") or country.title()
+        disable_scrapers = tuple(
+            s.lower().strip()
+            for s in data.get("disable_scrapers", [])
+            if isinstance(s, str) and s.strip()
+        )
 
         return cls(
             id=profile_id,
@@ -55,6 +61,7 @@ class ProfileConfig:
             cv_text=cv_path.read_text(encoding="utf-8"),
             scoring_prompt=scoring_prompt_path.read_text(encoding="utf-8"),
             search_terms=_required_string_list(data, "search_terms"),
+            disable_scrapers=disable_scrapers,
         )
 
     @classmethod

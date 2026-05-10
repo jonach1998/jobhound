@@ -1,8 +1,18 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import MagicMock
 
 from jobhound.scrapers.jobspy_scraper import JobSpyScraper, clean_text
+
+
+def make_profile(disable_scrapers: tuple[str, ...] = ()) -> MagicMock:
+    profile = MagicMock()
+    profile.search_terms = ["analyst"]
+    profile.country = "costa rica"
+    profile.location = "San José, CR"
+    profile.disable_scrapers = disable_scrapers
+    return profile
 
 
 def make_row(**overrides: object) -> dict:
@@ -56,6 +66,25 @@ class JobSpyScraperTest(unittest.TestCase):
         self.assertIsNotNone(job1)
         self.assertIsNotNone(job2)
         self.assertNotEqual(job1.id, job2.id)
+
+    def test_from_profile_uses_both_sites_by_default(self) -> None:
+        scraper = JobSpyScraper.from_profile(make_profile())
+
+        self.assertIsNotNone(scraper)
+        self.assertIn("linkedin", scraper.job_sites)
+        self.assertIn("indeed", scraper.job_sites)
+
+    def test_from_profile_removes_disabled_site(self) -> None:
+        scraper = JobSpyScraper.from_profile(make_profile(disable_scrapers=("linkedin",)))
+
+        self.assertIsNotNone(scraper)
+        self.assertNotIn("linkedin", scraper.job_sites)
+        self.assertIn("indeed", scraper.job_sites)
+
+    def test_from_profile_returns_none_when_all_sites_disabled(self) -> None:
+        scraper = JobSpyScraper.from_profile(make_profile(disable_scrapers=("linkedin", "indeed")))
+
+        self.assertIsNone(scraper)
 
     def test_clean_text_handles_none(self) -> None:
         self.assertEqual(clean_text(None), "")

@@ -108,6 +108,20 @@ class ProfileDiscoverTest(unittest.TestCase):
         self.assertEqual(profiles[0].country, "costa rica")
         self.assertEqual(profiles[0].location, "Costa Rica")
 
+    def test_disable_scrapers_defaults_to_empty(self) -> None:
+        self._make_profile("no-disable")
+
+        profiles = ProfileConfig.discover(self.tmp, "profile.yaml", "cv.txt", "scoring_prompt.txt")
+
+        self.assertEqual(profiles[0].disable_scrapers, ())
+
+    def test_disable_scrapers_parsed_and_lowercased(self) -> None:
+        self._make_profile("with-disable", extra_yaml="disable_scrapers:\n  - Computrabajo\n  - LinkedIn\n")
+
+        profiles = ProfileConfig.discover(self.tmp, "profile.yaml", "cv.txt", "scoring_prompt.txt")
+
+        self.assertEqual(profiles[0].disable_scrapers, ("computrabajo", "linkedin"))
+
     def test_missing_country_raises(self) -> None:
         d = self.tmp / "profiles" / "broken"
         d.mkdir(parents=True)

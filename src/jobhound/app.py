@@ -252,7 +252,11 @@ class JobHoundApp:
                 log.warning(log_event("run", "summary.failed"))
 
     def _scrapers_for(self, profile: ProfileConfig) -> list[BaseScraper]:
-        return [s for cls in SCRAPERS if (s := cls.from_profile(profile)) is not None]
+        return [
+            s for cls in SCRAPERS
+            if _scraper_name(cls) not in profile.disable_scrapers
+            if (s := cls.from_profile(profile)) is not None
+        ]
 
     def _scorer_for(self, profile: ProfileConfig) -> JobScorer:
         return JobScorer(
@@ -286,6 +290,11 @@ class JobHoundApp:
             )
         )
         scheduler.start()
+
+
+def _scraper_name(cls: type[BaseScraper]) -> str:
+    """Derive a stable lowercase name from the class: ComputrabajoScraper → 'computrabajo'."""
+    return cls.__name__.lower().removesuffix("scraper")
 
 
 def _log_job_result(profile_id: str, icon: str, job: Job, suffix: str = "") -> None:
