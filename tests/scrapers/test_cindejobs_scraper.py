@@ -200,7 +200,7 @@ class CindeJobsScraperTest(unittest.TestCase):
             calls.append(page)
             return full_page if page == 1 else []
 
-        scraper = CindeJobsScraper(["supply chain"], request_delay=0)
+        scraper = CindeJobsScraper(["supply chain"])
         scraper._fetch_page = fake_fetch
         results = scraper._search("supply chain")
 
@@ -216,7 +216,7 @@ class CindeJobsScraperTest(unittest.TestCase):
             calls.append(page)
             return [RAW_JOB]  # 1 result < 20 limit → no more pages
 
-        scraper = CindeJobsScraper(["supply chain"], request_delay=0)
+        scraper = CindeJobsScraper(["supply chain"])
         scraper._fetch_page = fake_fetch
         results = scraper._search("supply chain")
 
@@ -230,7 +230,7 @@ class CindeJobsScraperTest(unittest.TestCase):
             calls.append(page)
             return []
 
-        scraper = CindeJobsScraper(["supply chain"], request_delay=0)
+        scraper = CindeJobsScraper(["supply chain"])
         scraper._fetch_page = fake_fetch
         results = scraper._search("supply chain")
 
@@ -248,7 +248,7 @@ class CindeJobsScraperTest(unittest.TestCase):
             calls.append(page)
             return full_page  # always returns a full page to force pagination
 
-        scraper = CindeJobsScraper(["supply chain"], request_delay=0)
+        scraper = CindeJobsScraper(["supply chain"])
         scraper._fetch_page = fake_fetch
         scraper._search("supply chain")
 
@@ -258,7 +258,7 @@ class CindeJobsScraperTest(unittest.TestCase):
         def fake_fetch(term: str, page: int) -> list:
             return [RAW_JOB] if page == 1 else []
 
-        scraper = CindeJobsScraper(["supply chain", "logistics"], request_delay=0)
+        scraper = CindeJobsScraper(["supply chain", "logistics"])
         scraper._fetch_page = fake_fetch
         jobs = list(scraper.scrape())
 

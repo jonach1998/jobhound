@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import time
 from collections.abc import Iterator, Sequence
 
 import requests
@@ -20,7 +19,6 @@ _FAIR_ID = 100
 _RESULTS_PER_PAGE = 20
 _MAX_PAGES = 20  # safety cap; current total across all terms is ~200 jobs (11 pages)
 _REQUEST_TIMEOUT = 15
-_REQUEST_DELAY = 0.5  # seconds between page requests
 _DESCRIPTION_LIMIT = 3000
 
 # CINDE is Costa Rica's investment promotion agency — all listings are in Costa Rica.
@@ -65,11 +63,9 @@ class CindeJobsScraper(BaseScraper):
         self,
         search_terms: Sequence[str],
         session: requests.Session | None = None,
-        request_delay: float = _REQUEST_DELAY,
     ) -> None:
         super().__init__(search_terms)
         self.session = session or requests.Session()
-        self.request_delay = request_delay
 
     @classmethod
     def from_profile(cls, profile: ProfileConfig) -> CindeJobsScraper | None:
@@ -92,9 +88,6 @@ class CindeJobsScraper(BaseScraper):
         page = 1
 
         while page <= _MAX_PAGES:
-            if page > 1:
-                time.sleep(self.request_delay)
-
             raw_jobs = self._fetch_page(term, page)
             if not raw_jobs:
                 break
