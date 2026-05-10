@@ -230,14 +230,16 @@ The app auto-discovers all active profiles at startup. No code or Docker changes
 |---|---|---|
 | `country` | Yes | Lowercase country slug (e.g. `"costa rica"`, `"usa"`, `"mexico"`, `"germany"`). Used for Indeed; LinkedIn falls back to this if `location` is unset; Computrabajo is auto-enabled for supported Latin American countries. See the [full list of 69 supported countries](https://github.com/Bunsly/JobSpy/blob/main/jobspy/model.py). |
 | `location` | No | More specific city- or region-level filter for LinkedIn and Indeed (e.g. `"San José, CR"`, `"Mexico City"`, `"Berlin, Germany"`). Defaults to the country name capitalized when omitted. |
-| `disable_scrapers` | No | List of scrapers to skip for this profile. Valid values: `computrabajo`, `jobspy`, `linkedin`, `indeed`. Using `linkedin` or `indeed` disables only that site within JobSpy; `jobspy` disables both. |
+| `disable_scrapers` | No | List of scrapers to skip for this profile. Valid values: `computrabajo`, `jobspy`, `linkedin`, `indeed`, `cindejobs`, `talentcr`. Using `linkedin` or `indeed` disables only that site within JobSpy; `jobspy` disables both. |
 
 > **Computrabajo is auto-enabled** when `country` is one of: argentina, bolivia, chile, colombia, costa rica, dominican republic, ecuador, el salvador, guatemala, honduras, mexico, nicaragua, panama, paraguay, peru, puerto rico, uruguay, venezuela. For any other country, only LinkedIn and Indeed run.
 
-Example — disable Computrabajo for a specific profile:
+> **CINDEJobs and TalentCR are auto-enabled** when `country` is `"costa rica"`. CINDEJobs covers multinationals arriving via CINDE (Costa Rica's investment promotion agency). TalentCR covers free-trade-zone companies registered with PROCOMER. Both can be disabled individually via `disable_scrapers`.
+
+Example — disable CINDEJobs for a specific profile:
 ```yaml
 disable_scrapers:
-  - computrabajo
+  - cindejobs
 ```
 
 ## Project structure

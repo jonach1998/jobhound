@@ -137,7 +137,7 @@ Copy `profiles/example/`, rename the folder, and edit the three files:
 
 Remove `example: true` from `profile.yaml` when ready. The app auto-discovers all active profiles at startup.
 
-**`disable_scrapers`** accepts: `computrabajo`, `jobspy`, `linkedin`, `indeed`. Using `linkedin` or `indeed` disables only that site within JobSpy; `jobspy` disables both at once.
+**`disable_scrapers`** accepts: `computrabajo`, `jobspy`, `linkedin`, `indeed`, `cindejobs`, `talentcr`. Using `linkedin` or `indeed` disables only that site within JobSpy; `jobspy` disables both at once. `cindejobs` and `talentcr` are only active for profiles with `country: "costa rica"` and can be disabled individually.
 
 ## Code style
 
