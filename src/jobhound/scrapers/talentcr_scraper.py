@@ -14,6 +14,7 @@ from jobhound.utils.logging_utils import log_event
 log = logging.getLogger(__name__)
 
 _API_URL = "https://talento.procomer.com/api/candidate/jobs"
+_MAX_PAGES = 30  # safety cap; each search term rarely exceeds a few pages in practice
 _REQUEST_TIMEOUT = 20
 _DESCRIPTION_LIMIT = 3000
 
@@ -66,7 +67,7 @@ class TalentCRScraper(BaseScraper):
         seen_ids: set[int] = set()
         page = 1
 
-        while True:
+        while page <= _MAX_PAGES:
             raw_jobs, last_page = self._fetch_page(term, page)
             if not raw_jobs:
                 break
@@ -96,7 +97,7 @@ class TalentCRScraper(BaseScraper):
             response.raise_for_status()
             jobs_data = response.json().get("data", {}).get("jobs", {})
             return jobs_data.get("data") or [], jobs_data.get("last_page", 1)
-        except (requests.RequestException, ValueError, KeyError) as exc:
+        except (requests.RequestException, ValueError, AttributeError) as exc:
             log.warning(log_event("talentcr", "fetch.failed", page=page, term=term, error=exc))
             return [], 1
 

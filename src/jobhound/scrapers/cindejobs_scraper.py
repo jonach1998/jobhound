@@ -17,6 +17,7 @@ GRAPHQL_URL = "https://api.cindejobs.com/graphql"
 # fairId 100 is the permanent job fair — required; without it the API returns 0 results.
 _FAIR_ID = 100
 _RESULTS_PER_PAGE = 20
+_MAX_PAGES = 20  # safety cap; current total across all terms is ~200 jobs (11 pages)
 _REQUEST_TIMEOUT = 15
 _DESCRIPTION_LIMIT = 3000
 
@@ -24,8 +25,8 @@ _DESCRIPTION_LIMIT = 3000
 _SUPPORTED_COUNTRIES = frozenset({"costa rica"})
 
 _QUERY = """
-query($search: String, $page: Int, $limit: Int) {
-    viewJobOffers(search: $search, page: $page, limit: $limit, fairId: 100) {
+query($search: String, $page: Int, $limit: Int, $fairId: Int) {
+    viewJobOffers(search: $search, page: $page, limit: $limit, fairId: $fairId) {
         uuid slug name companyName companySlug officeName description
     }
 }
@@ -77,7 +78,7 @@ class CindeJobsScraper(BaseScraper):
         seen_uuids: set[str] = set()
         page = 1
 
-        while True:
+        while page <= _MAX_PAGES:
             raw_jobs = self._fetch_page(term, page)
             if not raw_jobs:
                 break
@@ -99,7 +100,7 @@ class CindeJobsScraper(BaseScraper):
     def _fetch_page(self, term: str, page: int) -> list[dict]:
         payload = {
             "query": _QUERY,
-            "variables": {"search": term, "page": page, "limit": _RESULTS_PER_PAGE},
+            "variables": {"search": term, "page": page, "limit": _RESULTS_PER_PAGE, "fairId": _FAIR_ID},
         }
         try:
             response = self.session.post(
@@ -107,7 +108,7 @@ class CindeJobsScraper(BaseScraper):
             )
             response.raise_for_status()
             return response.json().get("data", {}).get("viewJobOffers") or []
-        except (requests.RequestException, ValueError, KeyError) as exc:
+        except (requests.RequestException, ValueError, AttributeError) as exc:
             log.warning(log_event("cindejobs", "fetch.failed", page=page, term=term, error=exc))
             return []
 
@@ -130,7 +131,7 @@ class CindeJobsScraper(BaseScraper):
         description = BeautifulSoup(description_html, "lxml").get_text(separator="\n", strip=True)
 
         return Job(
-            id=make_job_id("cindejobs", uuid, title, company),
+            id=make_job_id("cindejobs", url, title, company),
             site="cindejobs",
             title=title,
             company=company,
