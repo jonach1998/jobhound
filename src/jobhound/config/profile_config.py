@@ -15,6 +15,8 @@ class ProfileConfig:
     id: str
     display_name: str
     score_threshold: int
+    country: str
+    location: str
     cv_path: Path
     cv_text: str
     scoring_prompt: str
@@ -40,10 +42,15 @@ class ProfileConfig:
         _ensure_profile_file(cv_path, profile_id, "CV")
         _ensure_profile_file(scoring_prompt_path, profile_id, "scoring prompt")
 
+        country = _required_text(data, "country").lower()
+        location = _optional_text(data, "location") or country.title()
+
         return cls(
             id=profile_id,
             display_name=_required_text(data, "display_name"),
             score_threshold=_required_score_threshold(data),
+            country=country,
+            location=location,
             cv_path=cv_path,
             cv_text=cv_path.read_text(encoding="utf-8"),
             scoring_prompt=scoring_prompt_path.read_text(encoding="utf-8"),
@@ -105,6 +112,15 @@ def _required_text(data: dict[str, Any], key: str) -> str:
     value = data.get(key)
     if not isinstance(value, str) or not value.strip():
         raise RuntimeError(f"profile.yaml requires {key} as a string")
+    return value.strip()
+
+
+def _optional_text(data: dict[str, Any], key: str) -> str:
+    value = data.get(key)
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise RuntimeError(f"profile.yaml expects {key} as a string")
     return value.strip()
 
 

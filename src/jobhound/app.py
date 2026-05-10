@@ -56,7 +56,7 @@ class JobHoundApp:
         config = AppConfig.from_env(app_dir)
         return cls(
             config=config,
-            repository=JobRepository(),
+            repository=JobRepository(app_dir.parent / "data" / "jobs.sqlite"),
             notifier=TelegramNotifier(
                 token=config.telegram_bot_token,
                 chat_ids=config.telegram_chat_ids,
@@ -252,7 +252,7 @@ class JobHoundApp:
                 log.warning(log_event("run", "summary.failed"))
 
     def _scrapers_for(self, profile: ProfileConfig) -> list[BaseScraper]:
-        return [cls(profile.search_terms) for cls in SCRAPERS]
+        return [s for cls in SCRAPERS if (s := cls.from_profile(profile)) is not None]
 
     def _scorer_for(self, profile: ProfileConfig) -> JobScorer:
         return JobScorer(

@@ -4,6 +4,7 @@ import logging
 from collections.abc import Iterator, Sequence
 from typing import Any
 
+from jobhound.config import ProfileConfig
 from jobhound.utils.logging_utils import log_event
 from jobhound.models import Job, make_job_id
 from jobhound.scrapers.base import BaseScraper
@@ -11,8 +12,6 @@ from jobhound.scrapers.base import BaseScraper
 log = logging.getLogger(__name__)
 
 JOB_SITES = ("linkedin", "indeed")
-LOCATION = "Costa Rica"
-INDEED_COUNTRY = "costa rica"
 RESULTS_WANTED = 25
 HOURS_OLD = 72
 
@@ -21,23 +20,31 @@ class JobSpyScraper(BaseScraper):
     def __init__(
         self,
         search_terms: Sequence[str],
+        country: str = "",
+        location: str = "",
         job_sites: Sequence[str] = JOB_SITES,
     ) -> None:
         super().__init__(search_terms)
+        self.country = country
+        self.location = location or country.title()
         self.job_sites = job_sites
+
+    @classmethod
+    def from_profile(cls, profile: ProfileConfig) -> JobSpyScraper:
+        return cls(profile.search_terms, profile.country, profile.location)
 
     def scrape(self) -> Iterator[Job]:
         from jobspy import scrape_jobs
 
         seen: set[str] = set()
         for term in self.search_terms:
-            log.info(f"[jobspy] searching: {term}")
+            log.info(f"[jobspy] searching: {term} in {self.location}")
             try:
                 jobs = scrape_jobs(
                     site_name=list(self.job_sites),
                     search_term=term,
-                    location=LOCATION,
-                    country_indeed=INDEED_COUNTRY,
+                    location=self.location,
+                    country_indeed=self.country,
                     results_wanted=RESULTS_WANTED,
                     hours_old=HOURS_OLD,
                     description_format="markdown",

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from jobhound.models import Job
 
-DB_PATH = Path("/app/data/jobs.sqlite")
+DB_PATH = Path("data/jobs.sqlite")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS jobs (

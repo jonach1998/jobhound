@@ -9,18 +9,40 @@ import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
+from jobhound.config import ProfileConfig
 from jobhound.utils.logging_utils import log_event
 from jobhound.models import Job, make_job_id
 from jobhound.scrapers.base import BaseScraper
 
 log = logging.getLogger(__name__)
 
-BASE_URL = "https://www.computrabajo.co.cr"
 REQUEST_TIMEOUT = 15
 REQUEST_DELAY = 1.5
 DESCRIPTION_LIMIT = 3000
 DESCRIPTION_MIN_LENGTH = 50
 MAX_PAGES = 3
+
+# Country → top-level domain. Computrabajo only operates in Latin America.
+COMPUTRABAJO_TLDS = {
+    "argentina": "com.ar",
+    "bolivia": "com.bo",
+    "chile": "cl",
+    "colombia": "com.co",
+    "costa rica": "co.cr",
+    "dominican republic": "com.do",
+    "ecuador": "com.ec",
+    "el salvador": "com.sv",
+    "guatemala": "com.gt",
+    "honduras": "com.hn",
+    "mexico": "com.mx",
+    "nicaragua": "com.ni",
+    "panama": "com.pa",
+    "paraguay": "com.py",
+    "peru": "com.pe",
+    "puerto rico": "com.pr",
+    "uruguay": "com.uy",
+    "venezuela": "com.ve",
+}
 
 LISTING_SELECTORS = "article.box_offer, div.offer_item, article[data-id]"
 TITLE_SELECTOR = "h2 a, h3 a, a.js-o-link, a[class*='title']"
@@ -51,17 +73,26 @@ class ComputrabajoScraper(BaseScraper):
     def __init__(
         self,
         search_terms: Sequence[str],
+        tld: str = "co.cr",
         session: requests.Session | None = None,
         request_delay: float = REQUEST_DELAY,
     ) -> None:
         super().__init__(search_terms)
+        self.base_url = f"https://www.computrabajo.{tld}"
         self.session = session or requests.Session()
         self.request_delay = request_delay
+
+    @classmethod
+    def from_profile(cls, profile: ProfileConfig) -> ComputrabajoScraper | None:
+        tld = COMPUTRABAJO_TLDS.get(profile.country)
+        if not tld:
+            return None
+        return cls(profile.search_terms, tld)
 
     def scrape(self) -> Iterator[Job]:
         seen: set[str] = set()
         for term in self.search_terms:
-            log.info(f"[computrabajo] searching: {term}")
+            log.info(f"[computrabajo] searching: {term} on {self.base_url}")
             for job in self._search(term):
                 if job.id in seen:
                     continue
@@ -73,7 +104,7 @@ class ComputrabajoScraper(BaseScraper):
         seen_ids: set[str] = set()
 
         for page in range(1, MAX_PAGES + 1):
-            url = f"{BASE_URL}/ofertas-de-trabajo/?q={quote(term)}"
+            url = f"{self.base_url}/ofertas-de-trabajo/?q={quote(term)}"
             if page > 1:
                 url += f"&p={page}"
 
@@ -134,13 +165,13 @@ class ComputrabajoScraper(BaseScraper):
         company = card.select_one(COMPANY_SELECTOR)
         location = card.select_one(LOCATION_SELECTOR)
         company_name = company.get_text(strip=True) if company else ""
-        url = urljoin(BASE_URL, href.split("#")[0])
+        url = urljoin(self.base_url, href.split("#")[0])
         return Job(
             id=make_job_id("computrabajo", url, title, company_name),
             site="computrabajo",
             title=title,
             company=company_name,
-            location=location.get_text(strip=True) if location else "Costa Rica",
+            location=location.get_text(strip=True) if location else "",
             url=url,
         )
 

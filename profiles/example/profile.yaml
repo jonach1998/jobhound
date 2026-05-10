@@ -4,6 +4,26 @@ example: true
 
 display_name: "Customer Service - San José, CR"
 score_threshold: 70
+
+# Country to search jobs in (lowercase). Used for LinkedIn, Indeed, and — when
+# applicable — Computrabajo. Computrabajo is auto-enabled for these countries:
+#   argentina, bolivia, chile, colombia, costa rica, dominican republic, ecuador,
+#   el salvador, guatemala, honduras, mexico, nicaragua, panama, paraguay, peru,
+#   puerto rico, uruguay, venezuela.
+# Other supported (LinkedIn + Indeed only):
+#   usa, canada, uk, ireland, australia, new zealand, india, philippines, singapore,
+#   japan, south korea, hong kong, malaysia, indonesia, thailand, vietnam, taiwan,
+#   germany, france, spain, italy, portugal, netherlands, belgium, austria, switzerland,
+#   sweden, norway, denmark, finland, poland, czech republic, hungary, romania, greece,
+#   ukraine, türkiye, israel, saudi arabia, united arab emirates, qatar, bahrain, kuwait,
+#   oman, egypt, morocco, nigeria, south africa, brazil.
+# Full list (69 countries): https://github.com/Bunsly/JobSpy/blob/main/jobspy/model.py
+country: "costa rica"
+
+# Optional. City- or region-level filter for LinkedIn/Indeed (e.g. "San José, CR",
+# "Mexico City", "Berlin, Germany"). Defaults to the country name when omitted.
+# location: "San José, Costa Rica"
+
 search_terms:
   - "customer service representative"
   - "customer support agent"

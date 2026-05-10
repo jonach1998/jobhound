@@ -92,6 +92,7 @@ class ProfileFixture:
             """
 display_name: "Test Profile"
 score_threshold: 65
+country: "costa rica"
 search_terms:
   - "entry-level customer service representative"
   - "junior customer service representative"

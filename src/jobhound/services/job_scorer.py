@@ -52,9 +52,10 @@ class JobScorer:
                 reason = "\n".join(parts) if parts else str(data.get("reason", "")).strip()
                 return clamp(coerce_score(data["score"])), reason
             except APIStatusError as exc:
-                if exc.status_code < 500:
-                    return 0, f"error: {exc}"
-                return 0, f"transient: {exc}"
+                # 429 (rate limit) is transient — retry next run
+                if exc.status_code == 429 or exc.status_code >= 500:
+                    return 0, f"transient: {exc}"
+                return 0, f"error: {exc}"
             except APIConnectionError as exc:
                 return 0, f"transient: {exc}"
             except (KeyError, TypeError, ValueError, IndexError) as exc:

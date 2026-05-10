@@ -19,6 +19,8 @@ class ProfileLoadTest(unittest.TestCase):
 
         self.assertEqual(profile.display_name, "Customer Service - San José, CR")
         self.assertEqual(profile.score_threshold, 70)
+        self.assertEqual(profile.country, "costa rica")
+        self.assertEqual(profile.location, "Costa Rica")
         self.assertIn("customer service representative", profile.search_terms)
         self.assertTrue(profile.cv_path.is_file())
         self.assertGreater(len(profile.scoring_prompt), 100)
@@ -45,7 +47,10 @@ class ProfileDiscoverTest(unittest.TestCase):
         shutil.copy(EXAMPLE_DIR / "cv.txt", d / "cv.txt")
         shutil.copy(EXAMPLE_DIR / "scoring_prompt.txt", d / "scoring_prompt.txt")
         (d / "profile.yaml").write_text(
-            f'display_name: "{name}"\nscore_threshold: 70\nsearch_terms:\n  - "test"\n{extra_yaml}'
+            f'display_name: "{name}"\n'
+            f"score_threshold: 70\n"
+            f'country: "costa rica"\n'
+            f'search_terms:\n  - "test"\n{extra_yaml}'
         )
 
     def test_discover_finds_active_profiles(self) -> None:
@@ -72,6 +77,48 @@ class ProfileDiscoverTest(unittest.TestCase):
 
     def test_discover_raises_when_profiles_dir_missing(self) -> None:
         with self.assertRaises(RuntimeError):
+            ProfileConfig.discover(self.tmp, "profile.yaml", "cv.txt", "scoring_prompt.txt")
+
+    def test_location_defaults_to_country_capitalized(self) -> None:
+        self._make_profile("no-location")
+
+        profiles = ProfileConfig.discover(self.tmp, "profile.yaml", "cv.txt", "scoring_prompt.txt")
+
+        self.assertEqual(profiles[0].location, "Costa Rica")
+
+    def test_location_override_takes_precedence(self) -> None:
+        self._make_profile("with-location", extra_yaml='location: "San José, CR"\n')
+
+        profiles = ProfileConfig.discover(self.tmp, "profile.yaml", "cv.txt", "scoring_prompt.txt")
+
+        self.assertEqual(profiles[0].location, "San José, CR")
+
+    def test_country_is_normalized_to_lowercase(self) -> None:
+        d = self.tmp / "profiles" / "uppercase"
+        d.mkdir(parents=True)
+        shutil.copy(EXAMPLE_DIR / "cv.txt", d / "cv.txt")
+        shutil.copy(EXAMPLE_DIR / "scoring_prompt.txt", d / "scoring_prompt.txt")
+        (d / "profile.yaml").write_text(
+            'display_name: "uppercase"\nscore_threshold: 70\n'
+            'country: "Costa Rica"\nsearch_terms:\n  - "test"\n'
+        )
+
+        profiles = ProfileConfig.discover(self.tmp, "profile.yaml", "cv.txt", "scoring_prompt.txt")
+
+        self.assertEqual(profiles[0].country, "costa rica")
+        self.assertEqual(profiles[0].location, "Costa Rica")
+
+    def test_missing_country_raises(self) -> None:
+        d = self.tmp / "profiles" / "broken"
+        d.mkdir(parents=True)
+        shutil.copy(EXAMPLE_DIR / "cv.txt", d / "cv.txt")
+        shutil.copy(EXAMPLE_DIR / "scoring_prompt.txt", d / "scoring_prompt.txt")
+        (d / "profile.yaml").write_text(
+            'display_name: "broken"\nscore_threshold: 70\n'
+            'search_terms:\n  - "test"\n'
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "country"):
             ProfileConfig.discover(self.tmp, "profile.yaml", "cv.txt", "scoring_prompt.txt")
 
 

@@ -1,6 +1,6 @@
 # JobHound 🐾
 
-[![CI](https://github.com/jonach1998/jobhound/actions/workflows/tests.yml/badge.svg)](https://github.com/jonach1998/jobhound/actions/workflows/tests.yml)
+[![CI](https://github.com/jonach1998/jobhound/actions/workflows/unittests.yml/badge.svg)](https://github.com/jonach1998/jobhound/actions/workflows/unittests.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -217,12 +217,21 @@ profiles/my-profile/
 
 1. Copy `profiles/example/` and rename the folder.
 2. Edit the three files:
-   - **`profile.yaml`** — set `display_name`, `score_threshold` (0–100), and `search_terms`.
+   - **`profile.yaml`** — set `display_name`, `score_threshold` (0–100), `country`, optionally `location`, and `search_terms`.
    - **`cv.txt`** — the candidate's CV in plain text. This is sent verbatim to the AI for every job scored.
    - **`scoring_prompt.txt`** — tell the AI what makes a good or bad match for this candidate. Describe the candidate's situation, define the score scale, and list what to prioritize and penalize. English or Spanish both work. See `profiles/example/scoring_prompt.txt` for a complete reference.
 3. Remove `example: true` from `profile.yaml`.
 
-The app auto-discovers all active profiles at startup. No code or Docker changes needed. Multiple profiles run independently — useful for searching different roles or candidates simultaneously.
+The app auto-discovers all active profiles at startup. No code or Docker changes needed. Multiple profiles run independently — useful for searching different roles, countries, or candidates simultaneously.
+
+**Per-profile location fields:**
+
+| Field | Required | Description |
+|---|---|---|
+| `country` | Yes | Lowercase country slug (e.g. `"costa rica"`, `"usa"`, `"mexico"`, `"germany"`). Used for Indeed; LinkedIn falls back to this if `location` is unset; Computrabajo is auto-enabled for supported Latin American countries. See the [full list of 69 supported countries](https://github.com/Bunsly/JobSpy/blob/main/jobspy/model.py). |
+| `location` | No | More specific city- or region-level filter for LinkedIn and Indeed (e.g. `"San José, CR"`, `"Mexico City"`, `"Berlin, Germany"`). Defaults to the country name capitalized when omitted. |
+
+> **Computrabajo is auto-enabled** when `country` is one of: argentina, bolivia, chile, colombia, costa rica, dominican republic, ecuador, el salvador, guatemala, honduras, mexico, nicaragua, panama, paraguay, peru, puerto rico, uruguay, venezuela. For any other country, only LinkedIn and Indeed run.
 
 ## Project structure
 

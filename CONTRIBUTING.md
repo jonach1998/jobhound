@@ -87,15 +87,29 @@ tests/                 # mirrors src/jobhound/ structure
 ## Adding a scraper
 
 1. Create `src/jobhound/scrapers/my_site_scraper.py`.
-2. Subclass `BaseScraper` and implement `scrape()`.
+2. Subclass `BaseScraper` and implement `scrape()` and `from_profile()`.
 3. Add the class to `SCRAPERS` in `src/jobhound/scrapers/__init__.py`.
 
 ```python
-from collections.abc import Iterator
-from jobhound.scrapers.base import BaseScraper
+from __future__ import annotations
+from collections.abc import Iterator, Sequence
+
+from jobhound.config import ProfileConfig
 from jobhound.models import Job, make_job_id
+from jobhound.scrapers.base import BaseScraper
+
 
 class MySiteScraper(BaseScraper):
+    def __init__(self, search_terms: Sequence[str], country: str = "") -> None:
+        super().__init__(search_terms)
+        self.country = country
+
+    @classmethod
+    def from_profile(cls, profile: ProfileConfig) -> MySiteScraper | None:
+        # Return None to skip this scraper for the given profile
+        # (e.g. when the country is not supported by the site).
+        return cls(profile.search_terms, profile.country)
+
     def scrape(self) -> Iterator[Job]:
         for term in self.search_terms:
             for raw in self._fetch(term):
@@ -110,13 +124,14 @@ class MySiteScraper(BaseScraper):
                 )
 ```
 
-`make_job_id` produces a stable 16-character hex ID from site + URL + title + company — use it so the same job is not scored twice across runs.
+- `make_job_id` produces a stable 16-character hex ID from site + URL + title + company — use it so the same job is not scored twice across runs.
+- `from_profile` builds the scraper instance for a given profile. Return `None` to skip the scraper (for example, if the profile doesn't configure a country your site supports).
 
 ## Adding a profile
 
 Copy `profiles/example/`, rename the folder, and edit the three files:
 
-- **`profile.yaml`** — set `display_name`, `score_threshold` (0–100), and `search_terms`.
+- **`profile.yaml`** — set `display_name`, `score_threshold` (0–100), `country`, optionally `location`, and `search_terms`.
 - **`cv.txt`** — the candidate's CV in plain text. Sent verbatim to the AI for every job scored.
 - **`scoring_prompt.txt`** — scoring instructions for the AI. See `profiles/example/scoring_prompt.txt` for a complete example.
 
