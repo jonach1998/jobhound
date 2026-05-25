@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import logging
 from pathlib import Path
 
@@ -12,10 +13,22 @@ LOG_FORMAT = "%(asctime)s | %(message)s"
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="JobHound — automated job hunter")
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Run all profiles once and exit (useful for Cloud)",
+    )
+    args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
     logging.getLogger("JobSpy").setLevel(logging.WARNING)
     load_dotenv(APP_DIR.parent / ".env")
-    JobHoundApp.from_env(APP_DIR).start()
+
+    app = JobHoundApp.from_env(APP_DIR)
+    if args.once:
+        app.run_profiles_once()
+    else:
+        app.start()
 
 
 if __name__ == "__main__":
