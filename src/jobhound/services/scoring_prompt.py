@@ -12,8 +12,6 @@ THINK_BLOCK_RE = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
 SCORE_RE = re.compile(r'["\']?\bscore\b["\']?\s*[:=]\s*(\d{1,3})', re.IGNORECASE)
 REASON_RE = re.compile(r'["\']?\breason\b["\']?\s*[:=]\s*(.+)', re.IGNORECASE | re.DOTALL)
 
-# Format instruction appears in both prompts: system prompt (primacy bias) and end of user
-# message (recency bias) — keeps compliance high regardless of how long the profile criteria are.
 SYSTEM_FORMAT_PREFIX = (
     "OUTPUT FORMAT (mandatory — follow exactly):\n"
     '{"score": <integer 0-100>, "pros": "<one line: what fits>", "cons": "<one line: what does not fit>"}\n\n'

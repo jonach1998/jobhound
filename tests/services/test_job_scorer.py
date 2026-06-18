@@ -45,14 +45,14 @@ class JobScorerTest(unittest.TestCase):
         self.assertIn("✔ good match", reason)
         self.assertIn("✘ missing English", reason)
 
-    def test_score_marks_invalid_model_response_as_error(self) -> None:
-        # MAX_JSON_RETRIES=1 → two attempts total, both return garbage
+    def test_score_marks_invalid_model_response_as_transient(self) -> None:
         scorer, _ = _make_scorer(["<think>thinking...</think>", "<think>still thinking...</think>"])
 
         score, reason = scorer.score("CV", _job())
 
         self.assertEqual(score, 0)
         self.assertIn("no JSON score in response", reason)
+        self.assertTrue(reason.startswith("transient:"), f"expected 'transient:' but got: {reason!r}")
 
     def test_score_retries_on_missing_json_then_succeeds(self) -> None:
         scorer, _ = _make_scorer([

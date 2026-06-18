@@ -14,11 +14,10 @@ from jobhound.utils.logging_utils import log_event
 log = logging.getLogger(__name__)
 
 _API_URL = "https://talento.procomer.com/api/candidate/jobs"
-_MAX_PAGES = 30  # safety cap; each search term rarely exceeds a few pages in practice
+_MAX_PAGES = 30
 _REQUEST_TIMEOUT = 20
 _DESCRIPTION_LIMIT = 3000
 
-# PROCOMER's Talent CR platform lists jobs exclusively in Costa Rica.
 _SUPPORTED_COUNTRIES = frozenset({"costa rica"})
 
 _HEADERS = {

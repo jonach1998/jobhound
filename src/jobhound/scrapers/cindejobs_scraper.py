@@ -14,19 +14,14 @@ from jobhound.utils.logging_utils import log_event
 log = logging.getLogger(__name__)
 
 _GRAPHQL_URL = "https://api.cindejobs.com/graphql"
-# fairId 100 is the permanent job fair — required; without it the API returns 0 results.
 _FAIR_ID = 100
 _RESULTS_PER_PAGE = 20
-_MAX_PAGES = 20  # safety cap; current total across all terms is ~200 jobs (11 pages)
+_MAX_PAGES = 20
 _REQUEST_TIMEOUT = 15
 _DESCRIPTION_LIMIT = 3000
 
-# CINDE is Costa Rica's investment promotion agency — all listings are in Costa Rica.
 _SUPPORTED_COUNTRIES = frozenset({"costa rica"})
 
-# Known server bug: the CINDEJobs API crashes with HTTP 500 instead of returning
-# an empty list when a search term matches zero jobs. This is not an application
-# error — treat it as "no results" and continue silently.
 _SERVER_BUG_STATUS = 500
 
 _QUERY = """
@@ -116,8 +111,6 @@ class CindeJobsScraper(BaseScraper):
                 _GRAPHQL_URL, json=payload, headers=_HEADERS, timeout=_REQUEST_TIMEOUT
             )
             if response.status_code == _SERVER_BUG_STATUS:
-                # The API crashes with 500 on zero-result searches instead of
-                # returning an empty list. This is expected for terms with no matches.
                 return []
             response.raise_for_status()
             return response.json().get("data", {}).get("viewJobOffers") or []

@@ -12,16 +12,25 @@ from jobhound.services.scoring_prompt import SYSTEM_FORMAT_PREFIX, clamp, parse_
 log = logging.getLogger(__name__)
 
 DESCRIPTION_LIMIT = 3500
-MAX_COMPLETION_TOKENS = 700
 MAX_JSON_RETRIES = 1
 INVALID_RESPONSE_SNIPPET_LENGTH = 240
 SCORE_NUMBER_RE = re.compile(r"\d{1,3}")
 
 
 class JobScorer:
-    def __init__(self, api_key: str, model: str, base_url: str, system_prompt: str) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        base_url: str,
+        system_prompt: str,
+        max_completion_tokens: int = 0,
+        temperature: float = 0.1,
+    ) -> None:
         self.model = model
         self.system_prompt = system_prompt
+        self.max_completion_tokens = max_completion_tokens
+        self.temperature = temperature
         self._is_minimax = "minimax" in base_url.lower()
         self._client = OpenAI(api_key=api_key, base_url=base_url)
 
@@ -34,7 +43,7 @@ class JobScorer:
                 content = self._completion(cv_text, job, description)
                 data = parse_json(content)
                 if "score" not in data:
-                    last_json_error = f"error: no JSON score in response: {safe_snippet(content)}"
+                    last_json_error = f"transient: no JSON score in response: {safe_snippet(content)}"
                     if attempt < MAX_JSON_RETRIES:
                         company = f" — {job.company}" if job.company else ""
                         log.info(
@@ -52,7 +61,6 @@ class JobScorer:
                 reason = "\n".join(parts) if parts else str(data.get("reason", "")).strip()
                 return clamp(coerce_score(data["score"])), reason
             except APIStatusError as exc:
-                # 429 (rate limit) is transient — retry next run
                 if exc.status_code == 429 or exc.status_code >= 500:
                     return 0, f"transient: {exc}"
                 return 0, f"error: {exc}"
@@ -61,12 +69,14 @@ class JobScorer:
             except (KeyError, TypeError, ValueError, IndexError) as exc:
                 return 0, f"error: {exc}"
 
-        return 0, last_json_error or "error: no valid response"
+        return 0, last_json_error or "transient: no valid response"
 
     def _completion(self, cv_text: str, job: Job, description: str) -> str:
-        # reasoning_split improves JSON reliability on MiniMax reasoning models.
-        # Skipped for other providers to avoid 400 errors on unknown fields.
         extra: dict[str, Any] = {"reasoning_split": True} if self._is_minimax else {}
+
+        optional: dict[str, Any] = {}
+        if self.max_completion_tokens > 0:
+            optional["max_tokens"] = self.max_completion_tokens
 
         response = self._client.chat.completions.create(
             model=self.model,
@@ -74,13 +84,12 @@ class JobScorer:
                 {"role": "system", "content": SYSTEM_FORMAT_PREFIX + self.system_prompt},
                 {"role": "user", "content": user_prompt(cv_text, job, description)},
             ],
-            max_tokens=MAX_COMPLETION_TOKENS,
             response_format={"type": "json_object"},
-            temperature=0.1,
+            temperature=self.temperature,
             extra_body=extra or None,
+            **optional,
         )
 
-        # MiniMax may return API-level errors with HTTP 200 inside the body.
         if self._is_minimax and response.model_extra:
             base_resp = response.model_extra.get("base_resp") or {}
             status_code = base_resp.get("status_code", 0)

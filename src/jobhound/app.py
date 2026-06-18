@@ -196,7 +196,6 @@ class JobHoundApp:
         job.score, job.score_reason = scorer.score(profile.cv_text, job)
 
         if job.score_reason.startswith("transient:"):
-            # Intentionally not saved: transient failures (network, 5xx) will be retried next run.
             stats.scoring_errors += 1
             _log_job_result(profile.id, "⚠️", job)
             return
@@ -264,6 +263,8 @@ class JobHoundApp:
             model=self.config.ai_model,
             base_url=self.config.ai_base_url,
             system_prompt=profile.scoring_prompt,
+            max_completion_tokens=self.config.ai_max_completion_tokens,
+            temperature=self.config.ai_temperature,
         )
 
     def _start_scheduler(self) -> None:

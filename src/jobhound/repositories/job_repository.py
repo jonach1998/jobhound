@@ -46,7 +46,6 @@ ON CONFLICT(profile_id, id) DO UPDATE SET
     score        = excluded.score,
     score_reason = excluded.score_reason,
     notified     = excluded.notified
-    -- seen_at is intentionally NOT updated: preserves the original discovery timestamp
 """
 
 UNNOTIFIED_MATCHES = """

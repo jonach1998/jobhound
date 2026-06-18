@@ -46,5 +46,25 @@ def bool_env(name: str) -> bool:
     raise RuntimeError(f"{name} must be a boolean: true/false")
 
 
+def optional_int_env(name: str, default: int) -> int:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        return default
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise RuntimeError(f"{name} must be an integer") from exc
+
+
+def optional_float_env(name: str, default: float) -> float:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        return default
+    try:
+        return float(value)
+    except ValueError as exc:
+        raise RuntimeError(f"{name} must be a number") from exc
+
+
 def _split_csv(raw: str) -> tuple[str, ...]:
     return tuple(value.strip() for value in raw.split(",") if value.strip())

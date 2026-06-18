@@ -160,6 +160,8 @@ Copy `.env.example` to `.env` and fill in the values:
 | `AI_API_KEY` | Yes | API key for your AI provider |
 | `AI_MODEL` | Yes | Model name (e.g. `gpt-4o-mini`, `llama-3.3-70b-versatile`) |
 | `AI_BASE_URL` | Yes | Provider base URL (see table below) |
+| `AI_MAX_COMPLETION_TOKENS` | No | Max tokens for the scoring response. `0` = no limit (default; recommended for reasoning models that truncate under a low cap) |
+| `AI_TEMPERATURE` | No | Sampling temperature for scoring; lower is more deterministic (default: `0.1`) |
 | `SCHEDULE_HOURS` | Yes | Hours to run daily (e.g. `08:00,20:00`) |
 | `RUN_ON_STARTUP` | Yes | `true` to run once immediately on container start |
 | `TZ` | Yes | Container timezone (e.g. `America/New_York`) |
@@ -201,6 +203,11 @@ JobHound uses the OpenAI chat completions format (`POST /v1/chat/completions`). 
 | [MiniMax](https://www.minimaxi.com) | `https://api.minimax.io/v1` | Tested default |
 
 > The model must support `response_format: {"type": "json_object"}`. All providers listed above support it.
+
+> **Using a reasoning model?** (e.g. MiniMax M3, Deepseek-R1) The reasoning shares the
+> output token budget with the JSON answer, so a low `AI_MAX_COMPLETION_TOKENS` can
+> truncate the response into an empty/invalid score. Keep it at `0` (no limit) — the
+> default — so the model always finishes the JSON.
 
 ## Profiles
 

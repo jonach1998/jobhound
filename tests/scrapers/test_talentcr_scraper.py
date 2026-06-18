@@ -52,7 +52,6 @@ def make_mock_session(json_data: object = None, raise_for_status_exc: Exception 
 
 
 class TalentCRScraperTest(unittest.TestCase):
-    # --- _to_job ---
 
     def test_to_job_extracts_core_fields(self) -> None:
         scraper = TalentCRScraper([])
@@ -119,7 +118,6 @@ class TalentCRScraperTest(unittest.TestCase):
         self.assertIsNotNone(job)
         self.assertEqual(job.location, "Alajuela")
 
-    # --- _fetch_page ---
 
     def test_fetch_page_returns_jobs_and_last_page_on_success(self) -> None:
         session = make_mock_session(json_data=API_RESPONSE)
@@ -164,7 +162,6 @@ class TalentCRScraperTest(unittest.TestCase):
         self.assertEqual(jobs, [])
         self.assertEqual(last_page, 3)
 
-    # --- from_profile ---
 
     def test_from_profile_enabled_for_costa_rica(self) -> None:
         self.assertIsNotNone(TalentCRScraper.from_profile(make_profile("costa rica")))
@@ -174,7 +171,6 @@ class TalentCRScraperTest(unittest.TestCase):
         self.assertIsNone(TalentCRScraper.from_profile(make_profile("usa")))
         self.assertIsNone(TalentCRScraper.from_profile(make_profile("colombia")))
 
-    # --- _search / pagination ---
 
     def test_search_paginates_through_all_pages(self) -> None:
         calls: list[int] = []
@@ -217,7 +213,7 @@ class TalentCRScraperTest(unittest.TestCase):
             calls.append(page)
             job_counter[0] += 1
             job = {**RAW_JOB, "id": job_counter[0]}
-            return [job], 9999  # last_page never reached to force max_pages cap
+            return [job], 9999
 
         scraper = TalentCRScraper(["logistica"])
         scraper._fetch_page = fake_fetch

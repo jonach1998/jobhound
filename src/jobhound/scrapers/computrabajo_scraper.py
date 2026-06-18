@@ -22,7 +22,6 @@ DESCRIPTION_LIMIT = 3000
 DESCRIPTION_MIN_LENGTH = 50
 MAX_PAGES = 3
 
-# Country → top-level domain. Computrabajo only operates in Latin America.
 COMPUTRABAJO_TLDS = {
     "argentina": "com.ar",
     "bolivia": "com.bo",

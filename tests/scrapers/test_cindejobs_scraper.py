@@ -50,7 +50,6 @@ def make_mock_session(
 
 
 class CindeJobsScraperTest(unittest.TestCase):
-    # --- _to_job ---
 
     def test_to_job_extracts_core_fields(self) -> None:
         scraper = CindeJobsScraper([])
@@ -114,7 +113,6 @@ class CindeJobsScraperTest(unittest.TestCase):
         self.assertIsNotNone(job)
         self.assertIn("uuid-001", job.url)
 
-    # --- _fetch_page ---
 
     def test_fetch_page_returns_jobs_on_success(self) -> None:
         session = make_mock_session(json_data=GRAPHQL_RESPONSE)
@@ -176,7 +174,6 @@ class CindeJobsScraperTest(unittest.TestCase):
 
         self.assertEqual(result, [])
 
-    # --- from_profile ---
 
     def test_from_profile_enabled_for_costa_rica(self) -> None:
         self.assertIsNotNone(CindeJobsScraper.from_profile(make_profile("costa rica")))
@@ -186,7 +183,6 @@ class CindeJobsScraperTest(unittest.TestCase):
         self.assertIsNone(CindeJobsScraper.from_profile(make_profile("usa")))
         self.assertIsNone(CindeJobsScraper.from_profile(make_profile("germany")))
 
-    # --- _search / pagination ---
 
     def test_search_fetches_page_two_when_page_one_is_full(self) -> None:
         """When page 1 returns a full page (20 items), page 2 must be attempted."""
@@ -214,7 +210,7 @@ class CindeJobsScraperTest(unittest.TestCase):
 
         def fake_fetch(term: str, page: int) -> list:
             calls.append(page)
-            return [RAW_JOB]  # 1 result < 20 limit → no more pages
+            return [RAW_JOB]
 
         scraper = CindeJobsScraper(["supply chain"])
         scraper._fetch_page = fake_fetch
@@ -246,7 +242,7 @@ class CindeJobsScraperTest(unittest.TestCase):
 
         def fake_fetch(term: str, page: int) -> list:
             calls.append(page)
-            return full_page  # always returns a full page to force pagination
+            return full_page
 
         scraper = CindeJobsScraper(["supply chain"])
         scraper._fetch_page = fake_fetch
